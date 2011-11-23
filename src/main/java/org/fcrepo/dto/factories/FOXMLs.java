@@ -1,4 +1,4 @@
-package org.fcrepo.generator.foxml;
+package org.fcrepo.dto.factories;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -11,7 +11,7 @@ import com.github.cwilper.fcrepo.dto.core.ControlGroup;
 import com.github.cwilper.fcrepo.dto.foxml.FOXMLWriter;
 
 public class FOXMLs {
-	public static File generateFOXMLFromRandomData(final int numVersions, final long size, final String filePrefix)
+	public final static File generateFOXMLFromRandomData(final int numVersions, final long size, final String filePrefix)
 			throws IOException {
 		final FOXMLWriter writer = new FOXMLWriter();
 		final File dir = new File(filePrefix);
@@ -21,7 +21,7 @@ public class FOXMLs {
 		return out;
 	}
 
-	public static File generateFOXMLFromURI(final URI uri, final File outFile) throws IOException {
+	public final static File generateFOXMLFromURI(final URI uri, final File outFile) throws IOException {
 		if (!outFile.exists()) {
 			outFile.createNewFile();
 		}

@@ -1,4 +1,4 @@
-package org.fcrepo.generator.foxml;
+package org.fcrepo.dto.factories;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -21,9 +21,9 @@ import com.github.cwilper.fcrepo.dto.core.InlineXML;
 
 public class Datastreams {
 	
-	private static Random random=new Random();
+	private final static Random random=new Random();
 	
-	public static DatastreamVersion generateDatastreamVersionFromRandomData(final long size, final String filePrefix)
+	public final static DatastreamVersion generateDatastreamVersionFromRandomData(final long size, final String filePrefix)
 			throws IOException {
 		final File versionFile = new File(filePrefix + "/" + UUID.randomUUID());
 		final FileOutputStream versionOut = new FileOutputStream(versionFile);
@@ -50,11 +50,11 @@ public class Datastreams {
 				.contentLocation(versionFile.toURI());
 	}
 
-	public static Datastream generateDatastreamFromURI(final URI uri) throws IOException{
+	public final static Datastream generateDatastreamFromURI(final URI uri) throws IOException{
 		return generateDatastreamFromURI(uri, ControlGroup.MANAGED);
 	}
 
-	public static Datastream generateDatastreamFromURI(final URI uri, ControlGroup controlGroup) throws IOException {
+	public final static Datastream generateDatastreamFromURI(final URI uri, ControlGroup controlGroup) throws IOException {
 		final Datastream datastream = new Datastream("datastream-" + UUID.randomUUID());
 		if (controlGroup == null) {
 			controlGroup = ControlGroup.MANAGED;
@@ -65,7 +65,7 @@ public class Datastreams {
 
 	}
 
-	public static Datastream generateDatastreamFromURIs(final List<URI> uris,final ControlGroup controlGroup) throws IOException {
+	public final static Datastream generateDatastreamFromURIs(final List<URI> uris,final ControlGroup controlGroup) throws IOException {
 		final Datastream datastream = new Datastream("datastream-" + UUID.randomUUID());
 		for (URI uri : uris) {
 			boolean success = false;
@@ -76,7 +76,7 @@ public class Datastreams {
 		return datastream;
 	}
 
-	public static List<Datastream> generateDatastreamsFromURIs(final List<URI> uris, final ControlGroup controlGroup) throws IOException{
+	public final static List<Datastream> generateDatastreamsFromURIs(final List<URI> uris, final ControlGroup controlGroup) throws IOException{
 		final List<Datastream> streams = new ArrayList<Datastream>();
 		for (URI uri : uris) {
 			streams.add(generateDatastreamFromURI(uri, controlGroup));
@@ -84,7 +84,7 @@ public class Datastreams {
 		return streams;
 	}
 
-	public static DatastreamVersion generateDatastreamVersionFromURI(final URI uri, ControlGroup controlGroup) throws IOException{
+	public final static DatastreamVersion generateDatastreamVersionFromURI(final URI uri, ControlGroup controlGroup) throws IOException{
 		if (controlGroup == null) {
 			controlGroup = ControlGroup.MANAGED;
 		}

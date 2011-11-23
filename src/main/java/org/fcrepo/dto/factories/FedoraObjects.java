@@ -1,4 +1,4 @@
-package org.fcrepo.generator.foxml;
+package org.fcrepo.dto.factories;
 
 import java.io.IOException;
 import java.net.URI;
@@ -15,11 +15,11 @@ public abstract class FedoraObjects {
 	private static final Random random = new Random();
 
 
-	public static FedoraObject generateFedoraObjectFromFile(final URI uri) throws IOException {
+	public final static FedoraObject generateFedoraObjectFromFile(final URI uri) throws IOException {
 		return generateFedoraObjectFromURI(uri, ControlGroup.MANAGED);
 	}
 
-	public static FedoraObject generateFedoraObjectFromRandomData(final int numVersions, final long size,
+	public final static FedoraObject generateFedoraObjectFromRandomData(final int numVersions, final long size,
 			final String filePrefix)
 			throws IOException {
 		final Datastream datastream = new Datastream("random datastream " + UUID.randomUUID());
@@ -40,7 +40,7 @@ public abstract class FedoraObjects {
 		return fo;
 	}
 
-	public static FedoraObject generateFedoraObjectFromURI(final URI uri, final ControlGroup controlGroup) throws IOException{
+	public final static FedoraObject generateFedoraObjectFromURI(final URI uri, final ControlGroup controlGroup) throws IOException{
 		final FedoraObject fo = new FedoraObject()
 				.pid("random:" + UUID.randomUUID())
 				.ownerId("testOwner")

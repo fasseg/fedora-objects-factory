@@ -18,6 +18,9 @@ import java.util.UUID;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.commons.io.FileUtils;
+import org.fcrepo.dto.factories.Datastreams;
+import org.fcrepo.dto.factories.FOXMLs;
+import org.fcrepo.dto.factories.FedoraObjects;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;

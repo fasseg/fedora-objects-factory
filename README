@@ -1,0 +1,17 @@
+fedora-objects-factory
+=======================
+
+the included factories were created for usage in fedora commons repository testing scenarios.
+See https://jira.duraspace.org/browse/FCREPO-1004
+the are built on top of fedora's data transfer objects (https://github.com/cwilper/fcrepo-misc/tree/master/fcrepo-dto)
+
+the factories are split into 3 parts for Datastreams, Fedora objects amd FOXML files.
+
+org.fcrepo.dto.factories.Datastreams
+ contains the factory methods for generating com.github.cwilper.fcrepo.dto.core.Datatsream objects
+
+org.fcrepo.dto.factories.FedoraObjects
+ contains the factory methods for generating com.github.cwilper.fcrepo.dto.core.FedoraObject objects
+
+org.fcrepo.dto.factories.FOXMLs
+ contains the factory methods for generating FOXML documents.
