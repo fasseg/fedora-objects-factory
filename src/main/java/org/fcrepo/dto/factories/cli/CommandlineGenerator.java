@@ -7,32 +7,35 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 import org.apache.commons.io.IOUtils;
+import org.fcrepo.dto.factories.FOXMLs;
 
 import com.github.cwilper.fcrepo.dto.core.ControlGroup;
 
 public final class CommandlineGenerator extends Questionary {
-	public static final String PROPERTY_INLINE_BASE64="generator.inline.base64";
-	public static final String PROPERTY_NUM_FOXML="generator.num.files";
-	public static final String PROPERTY_TARGET_DIRECTORY="generator.target.directory";
-	public static final String PROPERTY_DATASTREAMS_RANDOM="generator.datastreams.random";
-	public static final String PROPERTY_CONTROLGROUP="generator.controlgroup";
-	
-	private Properties properties=new Properties();
+	public static final String PROPERTY_INLINE_BASE64 = "generator.inline.base64";
+	public static final String PROPERTY_NUM_FOXML = "generator.num.files";
+	public static final String PROPERTY_TARGET_DIRECTORY = "generator.target.directory";
+	public static final String PROPERTY_DATASTREAMS_RANDOM = "generator.datastreams.random";
+	public static final String PROPERTY_CONTROLGROUP = "generator.controlgroup";
+
+	private Properties properties = new Properties();
 
 	private CommandlineGenerator(BufferedReader reader, PrintStream out) {
 		super(reader, out);
 	}
 
-	public CommandlineGenerator(File propFile) throws IOException{
-		super(null,null);
-		FileInputStream out=null;
-		try{
-			out=new FileInputStream(propFile);
+	public CommandlineGenerator(File propFile) throws IOException {
+		super(null, null);
+		FileInputStream out = null;
+		try {
+			out = new FileInputStream(propFile);
 			properties.load(out);
-		}finally{
+		} finally {
 			IOUtils.closeQuietly(out);
 		}
 	}
@@ -41,7 +44,8 @@ public final class CommandlineGenerator extends Questionary {
 		boolean valid = false;
 		while (!valid) {
 			try {
-				Integer numFoxml = poseQuestion(Integer.class, 100, "How many FOXML should be generated [default=100]? ");
+				Integer numFoxml = poseQuestion(Integer.class, 100,
+						"How many FOXML should be generated [default=100]? ");
 				properties.setProperty(PROPERTY_NUM_FOXML, String.valueOf(numFoxml));
 			} catch (NumberFormatException e) {
 				e.printStackTrace();
@@ -65,14 +69,11 @@ public final class CommandlineGenerator extends Questionary {
 		while (!valid) {
 			String path = poseQuestion(
 					String.class,
-					System.getProperty("java.io.tmpdir"),
+					System.getProperty("java.io.tmpdir") + "/foxml-test-files",
 					"Where should the generated FOXML files be written to [default="
-							+ System.getProperty("java.io.tmpdir") + "]? ");
+							+ System.getProperty("java.io.tmpdir") + "/foxml-test-files]? ");
 			File targetDirectory = new File(path);
-			if (!targetDirectory.exists()) {
-				System.err.println("Directory does not exist. Please try again");
-				Thread.sleep(1000); // let the user notice the err msg5
-			} else if (!targetDirectory.canWrite()) {
+			if (targetDirectory.exists() && (!targetDirectory.canWrite() || !targetDirectory.isDirectory())) {
 				System.err.println("Directory is not writeable. Please try again");
 				Thread.sleep(1000); // let the user notice the err msg5
 			} else {
@@ -102,7 +103,7 @@ public final class CommandlineGenerator extends Questionary {
 				controlGroup = ControlGroup.REDIRECT;
 				valid = true;
 			}
-			if (valid){
+			if (valid) {
 				properties.setProperty(PROPERTY_CONTROLGROUP, controlGroup.toString());
 			}
 		}
@@ -111,33 +112,48 @@ public final class CommandlineGenerator extends Questionary {
 			while (!valid) {
 				boolean inlineBase64 = poseQuestion(Boolean.class, false,
 						"Should the data be included via INLINE_BASE64? [default=no]");
-				valid=true;
+				valid = true;
 				properties.setProperty(PROPERTY_INLINE_BASE64, String.valueOf(inlineBase64));
 			}
 		}
 	}
 
 	private void startFOXMLCreation() throws IOException {
-		properties.store(new FileOutputStream("generator.properties"),"created by generator");
+		properties.store(new FileOutputStream("generator.properties"), "created by generator");
 		properties.store(System.out, "none");
-		//
-		// List<File> foxmls = new ArrayList<File>();
-		// for (int i = 0; i < numFoxml; i++) {
-		// foxmls.add(FOXMLs.generateFOXMLFromRandomData(1, 1024, targetDirectory.getAbsolutePath().toString()));
-		// }
-		// System.out.println("generated " + foxmls.size() + " FOXML files");
+		final int numFoxml = Integer.parseInt(properties.getProperty(PROPERTY_NUM_FOXML));
+		final File targetDirectory=new File(properties.getProperty(PROPERTY_TARGET_DIRECTORY));
+		final boolean randomDatastreams=Boolean.parseBoolean(properties.getProperty(PROPERTY_DATASTREAMS_RANDOM));
+		final ControlGroup controlGroup=ControlGroup.valueOf(properties.getProperty(PROPERTY_CONTROLGROUP));
+		final boolean inlineXMl=Boolean.parseBoolean(properties.getProperty(PROPERTY_INLINE_BASE64));
+		if (!targetDirectory.exists()){
+			targetDirectory.mkdir();
+		}
+		List<File> foxmls = new ArrayList<File>();
+		if (randomDatastreams){
+			for (int i = 0; i < numFoxml; i++) {
+				if (controlGroup == ControlGroup.INLINE_XML){
+					foxmls.add(FOXMLs.generateInlineFOXMLFromRandomData(1, 1024, targetDirectory.getAbsolutePath().toString()));
+				}else{
+					foxmls.add(FOXMLs.generateFOXMLFromRandomData(1, 1024L, targetDirectory.getAbsolutePath().toString(),controlGroup));
+				}
+			}
+		}else{
+			
+		}
+		System.out.println("generated " + foxmls.size() + " FOXML files");
 	}
 
 	public static void main(String[] args) {
-		if (args.length > 0 && args[0].toLowerCase().equals("-p")){
-			File propFile=new File(args[1]);
-			try{
-				CommandlineGenerator generator=new CommandlineGenerator(propFile);
+		if (args.length > 0 && args[0].toLowerCase().equals("-p")) {
+			File propFile = new File(args[1]);
+			try {
+				CommandlineGenerator generator = new CommandlineGenerator(propFile);
 				generator.startFOXMLCreation();
-			}catch(IOException e){
+			} catch (IOException e) {
 				e.printStackTrace();
 			}
-		}else{
+		} else {
 			BufferedReader reader = null;
 			try {
 				reader = new BufferedReader(new InputStreamReader(System.in));

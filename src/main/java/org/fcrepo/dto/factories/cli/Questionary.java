@@ -8,7 +8,7 @@ public class Questionary {
 	private final BufferedReader reader;
 	private final PrintStream out;
 	
-	protected Questionary(BufferedReader reader,PrintStream out) {
+	public Questionary(BufferedReader reader,PrintStream out) {
 		this.reader=reader;
 		this.out=out;
 	}

@@ -11,14 +11,29 @@ import com.github.cwilper.fcrepo.dto.core.ControlGroup;
 import com.github.cwilper.fcrepo.dto.foxml.FOXMLWriter;
 
 public class FOXMLs {
-	public final static File generateFOXMLFromRandomData(final int numVersions, final long size, final String filePrefix)
-			throws IOException {
+	public final static File generateFOXMLFromRandomData(final int numVersions, final long size,
+			final String filePrefix, final ControlGroup controlGroup) throws IOException {
 		final FOXMLWriter writer = new FOXMLWriter();
 		final File dir = new File(filePrefix);
 		final File out = File.createTempFile("testfoxml-", ".xml", dir);
-		writer.writeObject(FedoraObjects.generateFedoraObjectFromRandomData(numVersions, size, filePrefix),
+		writer.writeObject(FedoraObjects.generateFedoraObjectFromRandomData(numVersions, size, filePrefix,controlGroup),
 				new FileOutputStream(out));
 		return out;
+	}
+
+	public final static File generateInlineFOXMLFromRandomData(final int numVersions, final int size,
+			final String filePrefix) throws IOException {
+		final FOXMLWriter writer = new FOXMLWriter();
+		final File dir = new File(filePrefix);
+		final File out = File.createTempFile("testfoxml-", ".xml", dir);
+		writer.writeObject(FedoraObjects.generateFedoraObjectFromRandomDataInline(1, 1024),
+				new FileOutputStream(out));
+		return out;
+	}
+
+	public final static File generateFOXMLFromRandomData(final int numVersions, final long size, final String filePrefix)
+			throws IOException {
+		return generateFOXMLFromRandomData(numVersions, size, filePrefix, ControlGroup.MANAGED);
 	}
 
 	public final static File generateFOXMLFromURI(final URI uri, final File outFile) throws IOException {

@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 
 import com.github.cwilper.fcrepo.dto.core.ControlGroup;
@@ -22,6 +23,17 @@ import com.github.cwilper.fcrepo.dto.core.InlineXML;
 public class Datastreams {
 	
 	private final static Random random=new Random();
+	
+	public final static DatastreamVersion generateInlineDatastreamVersionFromRandomData(final int size) throws IOException{
+		final byte[] buffer = new byte[(int) size];
+				random.nextBytes(buffer);
+		final InlineXML inlineXml=new InlineXML("<?xml version=\"1.0\" encoding=\"utf-8\"?><base64>" + new String(Base64.encodeBase64(buffer),"UTF-8") + "</base64>"); 
+		return new DatastreamVersion("ds-" + UUID.randomUUID(), new Date())
+			.mimeType("application/octet-stream")
+			.formatURI(URI.create("info:fedora/fedora-system:def/foxml#"))
+			.label("testobject-" + UUID.randomUUID())
+			.inlineXML(inlineXml);
+	}
 	
 	public final static DatastreamVersion generateDatastreamVersionFromRandomData(final long size, final String filePrefix)
 			throws IOException {
@@ -96,7 +108,7 @@ public class Datastreams {
 			final InputStream in=null;
 			try{
 				IOUtils.copy(uri.toURL().openStream(),out);
-				final InlineXML xml=new InlineXML(out.toByteArray());
+				final InlineXML xml=new InlineXML(Base64.encodeBase64(out.toByteArray()));
 				version.inlineXML(xml);
 			}finally{
 				IOUtils.closeQuietly(in);
