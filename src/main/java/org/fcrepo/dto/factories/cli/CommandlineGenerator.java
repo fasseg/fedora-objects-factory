@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,132 +13,113 @@ import org.fcrepo.dto.factories.FOXMLs;
 
 import com.github.cwilper.fcrepo.dto.core.ControlGroup;
 
-public final class CommandlineGenerator {
+public final class CommandlineGenerator extends Questionary {
 	private int numFoxml = 100;
 	private File targetDirectory;
 	private ControlGroup controlGroup;
 	private boolean inlineBase64 = false;
-	private BufferedReader reader;
+	private boolean randomDatastreams = false;
 
-	private CommandlineGenerator(BufferedReader reader) {
-		this.reader = reader;
+	private CommandlineGenerator(BufferedReader reader, PrintStream out) {
+		super(reader, out);
 	}
 
 	private void questionNumFOXML() throws Exception {
-		// 1st question
-		boolean validAnswer = false;
-		do {
-			System.out.print("How many FOXML should be generated [default="
-					+ numFoxml + "]? ");
-			String line = reader.readLine();
-			if (line.length() == 0) {
-				validAnswer = true;
-			} else {
-				try {
-					numFoxml = Integer.parseInt(line);
-					validAnswer = true;
-				} catch (NumberFormatException nfe) {
-					System.err.println(line
-							+ " is not a valid number.Please try again");
-					Thread.sleep(1000); // let the user notice the err msg5
-				}
+		boolean valid = false;
+		while (!valid) {
+			try {
+				numFoxml = poseQuestion(Integer.class, 100, "How many FOXML should be generated [default=" + numFoxml
+						+ "]? ");
+			} catch (NumberFormatException e) {
+				e.printStackTrace();
 			}
+			valid = true;
+		}
+	}
 
-		} while (!validAnswer);
+	private void questionInputFiles() throws Exception {
+		boolean valid = false;
+		while (!valid) {
+			randomDatastreams = poseQuestion(Boolean.class, true,
+					"Should random data be generated for the datastreams? [default=yes]");
+			valid = true;
+		}
 	}
 
 	private void questionTargetDirectory() throws Exception {
-		// 2nd question
-		boolean validAnswer = false;
-		do {
-			targetDirectory = new File(System.getProperty("java.io.tmpdir"));
-			System.out
-					.print("Where should the generated FOXML files be written to [default="
-							+ targetDirectory.getAbsolutePath() + "]? ");
-			String line = reader.readLine();
-			if (line.length() == 0) {
-				validAnswer = true;
+		boolean valid = false;
+		while (!valid) {
+			String path = poseQuestion(
+					String.class,
+					System.getProperty("java.io.tmpdir"),
+					"Where should the generated FOXML files be written to [default="
+							+ System.getProperty("java.io.tmpdir") + "]? ");
+			targetDirectory = new File(path);
+			if (!targetDirectory.exists()) {
+				System.err.println("Directory does not exist. Please try again");
+				Thread.sleep(1000); // let the user notice the err msg5
+			} else if (!targetDirectory.canWrite()) {
+				System.err.println("Directory is not writeable. Please try again");
+				Thread.sleep(1000); // let the user notice the err msg5
 			} else {
-				targetDirectory = new File(line);
-				if (!targetDirectory.exists()) {
-					System.err
-							.println("Directory does not exist. Please try again");
-					Thread.sleep(1000); // let the user notice the err msg5
-				} else if (!targetDirectory.canWrite()) {
-					System.err
-							.println("Directory is not writeable. Please try again");
-					Thread.sleep(1000); // let the user notice the err msg5
-				} else {
-					validAnswer = true;
-				}
+				valid = true;
 			}
-		} while (!validAnswer);
+		}
 	}
 
 	private void questionControlGroup() throws Exception {
-		// 3rd question
-		boolean validAnswer = false;
-		do {
-			controlGroup = ControlGroup.MANAGED;
-
-			System.out
-					.print("What kind of ControlGroup should the FOXML's content streams be part of [Default=M] ? [M,I,E,R]");
-			String line = reader.readLine().toUpperCase();
-			if (line.length() == 0 || line.equals("M")) {
-				System.out
-						.print("Should the data be included via INLINE_BASE64? [default=no]");
-				String inline = reader.readLine().trim().toLowerCase();
-				if (inline.equals("yes")) {
-					inlineBase64 = true;
-				}
-				validAnswer = true;
-			} else if (line.length() != 1) {
-				System.err.println(line
-						+ " is not a valid control group. Please try again");
-				Thread.sleep(1000); // let the user notice the err msg5
-			} else {
-				if (line.equals("I")) {
-					controlGroup = ControlGroup.INLINE_XML;
-					validAnswer = true;
-				} else if (line.equals("E")) {
-					controlGroup = ControlGroup.EXTERNAL;
-					validAnswer = true;
-				} else if (line.equals("R")) {
-					controlGroup = ControlGroup.REDIRECT;
-					validAnswer = true;
-				} else {
-					System.err
-							.println(line
-									+ " is not a valid control group. Please try again");
-					Thread.sleep(1000); // let the user notice the err msg5
-				}
+		boolean valid = false;
+		while (!valid) {
+			String group = poseQuestion(String.class, "M",
+					"What kind of ControlGroup should the FOXML'x content stream be part of [default=M] ? <M,I,E,R>")
+					.toLowerCase();
+			if (group.length() == 0 || group.equals("m")) {
+				this.controlGroup = ControlGroup.MANAGED;
+				valid = true;
+			} else if (group.equals("i")) {
+				this.controlGroup = ControlGroup.EXTERNAL;
+				valid = true;
+			} else if (group.equals("e")) {
+				this.controlGroup = ControlGroup.INLINE_XML;
+				valid = true;
+			} else if (group.equals("r")) {
+				this.controlGroup = ControlGroup.REDIRECT;
+				valid = true;
 			}
-		} while (!validAnswer);
+		}
+		if (controlGroup == ControlGroup.MANAGED) {
+			valid = false;
+			while (!valid) {
+				inlineBase64 = poseQuestion(Boolean.class, false,
+						"Should the data be included via INLINE_BASE64? [default=no]");
+				valid=true;
+			}
+		}
 	}
 
 	private void startFOXMLCreation() throws IOException {
 		System.out.println("numFOXML: " + this.numFoxml);
-		System.out.println("targetDirectory: "
-				+ this.targetDirectory.getAbsolutePath());
+		System.out.println("random datastreams: " + this.randomDatastreams);
+		System.out.println("target directory: " + this.targetDirectory.getAbsolutePath());
 		System.out.println("ControlGroup: " + this.controlGroup);
-		
-		List<File> foxmls=new ArrayList<File>();
 		if (this.controlGroup == ControlGroup.MANAGED) {
 			System.out.println("inlineBase64: " + this.inlineBase64);
 		}
-		for (int i = 0; i < numFoxml; i++) {
-			foxmls.add(FOXMLs.generateFOXMLFromRandomData(1, 1024, targetDirectory
-					.getAbsolutePath().toString()));
-		}
-		System.out.println("generated " + foxmls.size() + " FOXML files");
+		//
+		// List<File> foxmls = new ArrayList<File>();
+		// for (int i = 0; i < numFoxml; i++) {
+		// foxmls.add(FOXMLs.generateFOXMLFromRandomData(1, 1024, targetDirectory.getAbsolutePath().toString()));
+		// }
+		// System.out.println("generated " + foxmls.size() + " FOXML files");
 	}
 
 	public static void main(String[] args) {
 		BufferedReader reader = null;
 		try {
 			reader = new BufferedReader(new InputStreamReader(System.in));
-			CommandlineGenerator generator = new CommandlineGenerator(reader);
+			CommandlineGenerator generator = new CommandlineGenerator(reader, System.out);
 			generator.questionNumFOXML();
+			generator.questionInputFiles();
 			generator.questionTargetDirectory();
 			generator.questionControlGroup();
 			generator.startFOXMLCreation();
