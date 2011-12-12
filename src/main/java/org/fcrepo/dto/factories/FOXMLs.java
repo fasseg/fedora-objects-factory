@@ -4,10 +4,13 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
+import java.security.KeyStore.Entry;
 
 import org.apache.commons.io.IOUtils;
 
 import com.github.cwilper.fcrepo.dto.core.ControlGroup;
+import com.github.cwilper.fcrepo.dto.core.Datastream;
+import com.github.cwilper.fcrepo.dto.core.FedoraObject;
 import com.github.cwilper.fcrepo.dto.foxml.FOXMLWriter;
 
 public class FOXMLs {
@@ -26,7 +29,9 @@ public class FOXMLs {
 		final FOXMLWriter writer = new FOXMLWriter();
 		final File dir = new File(filePrefix);
 		final File out = File.createTempFile("testfoxml-", ".xml", dir);
-		writer.writeObject(FedoraObjects.generateFedoraObjectFromRandomDataInline(1, 1024),
+		final FedoraObject fo=FedoraObjects.generateFedoraObjectFromRandomData(1, 1024,filePrefix,ControlGroup.MANAGED);
+		writer.setManagedDatastreamsToEmbed(fo.datastreams().keySet());
+		writer.writeObject(fo,
 				new FileOutputStream(out));
 		return out;
 	}

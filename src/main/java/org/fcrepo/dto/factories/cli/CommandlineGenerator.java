@@ -132,7 +132,7 @@ public final class CommandlineGenerator extends Questionary {
 		List<File> foxmls = new ArrayList<File>();
 		if (randomDatastreams){
 			for (int i = 0; i < numFoxml; i++) {
-				if (controlGroup == ControlGroup.INLINE_XML){
+				if (controlGroup == ControlGroup.MANAGED && inlineXMl){
 					foxmls.add(FOXMLs.generateInlineFOXMLFromRandomData(1, 1024, targetDirectory.getAbsolutePath().toString()));
 				}else{
 					foxmls.add(FOXMLs.generateFOXMLFromRandomData(1, 1024L, targetDirectory.getAbsolutePath().toString(),controlGroup));
