@@ -16,6 +16,16 @@ import org.fcrepo.dto.factories.FOXMLs;
 
 import com.github.cwilper.fcrepo.dto.core.ControlGroup;
 
+/**
+ * A command line utility for creating FOXML files for testing purposes. If run
+ * without any options it will default to interactive mode, fetching the
+ * relevant information from the user. If used with "-p <properties-file>" it
+ * reads the relevant information from the given properties file. The properties
+ * get written out to "generator.properties" on every run.
+ * 
+ * @author fasseg
+ * 
+ */
 public final class CommandlineGenerator extends Questionary {
 	public static final String PROPERTY_INLINE_BASE64 = "generator.inline.base64";
 	public static final String PROPERTY_NUM_FOXML = "generator.num.files";
@@ -122,28 +132,37 @@ public final class CommandlineGenerator extends Questionary {
 		properties.store(new FileOutputStream("generator.properties"), "created by generator");
 		properties.store(System.out, "none");
 		final int numFoxml = Integer.parseInt(properties.getProperty(PROPERTY_NUM_FOXML));
-		final File targetDirectory=new File(properties.getProperty(PROPERTY_TARGET_DIRECTORY));
-		final boolean randomDatastreams=Boolean.parseBoolean(properties.getProperty(PROPERTY_DATASTREAMS_RANDOM));
-		final ControlGroup controlGroup=ControlGroup.valueOf(properties.getProperty(PROPERTY_CONTROLGROUP));
-		final boolean inlineXMl=Boolean.parseBoolean(properties.getProperty(PROPERTY_INLINE_BASE64));
-		if (!targetDirectory.exists()){
+		final File targetDirectory = new File(properties.getProperty(PROPERTY_TARGET_DIRECTORY));
+		final boolean randomDatastreams = Boolean.parseBoolean(properties.getProperty(PROPERTY_DATASTREAMS_RANDOM));
+		final ControlGroup controlGroup = ControlGroup.valueOf(properties.getProperty(PROPERTY_CONTROLGROUP));
+		final boolean inlineXMl = Boolean.parseBoolean(properties.getProperty(PROPERTY_INLINE_BASE64));
+		if (!targetDirectory.exists()) {
 			targetDirectory.mkdir();
 		}
 		List<File> foxmls = new ArrayList<File>();
-		if (randomDatastreams){
+		if (randomDatastreams) {
 			for (int i = 0; i < numFoxml; i++) {
-				if (controlGroup == ControlGroup.MANAGED && inlineXMl){
+				if (controlGroup == ControlGroup.MANAGED && inlineXMl) {
 					foxmls.add(FOXMLs.generateInlineFOXMLFromRandomData(1, 1024, targetDirectory.getAbsolutePath().toString()));
-				}else{
-					foxmls.add(FOXMLs.generateFOXMLFromRandomData(1, 1024L, targetDirectory.getAbsolutePath().toString(),controlGroup));
+				} else {
+					foxmls.add(FOXMLs.generateFOXMLFromRandomData(1, 1024L, targetDirectory.getAbsolutePath().toString(), controlGroup));
 				}
 			}
-		}else{
-			
+		} else {
+
 		}
 		System.out.println("generated " + foxmls.size() + " FOXML files");
 	}
 
+	/**
+	 * Main method of the command line utility If run without any options it
+	 * will default to interactive mode, fetching the relevant information from
+	 * the user. If used with "-p <properties-file>" it reads the relevant
+	 * information from the given properties file. The properties get written
+	 * out to "generator.properties" on every run.
+	 * 
+	 * @param args
+	 */
 	public static void main(String[] args) {
 		if (args.length > 0 && args[0].toLowerCase().equals("-p")) {
 			File propFile = new File(args[1]);

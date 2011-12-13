@@ -63,8 +63,7 @@ public class FOXMLGeneratorTest {
 	
 	@Test
 	public void testGenerateFOXMLFromFile() throws Exception {
-		File out=new File(URI.create("file://" + TEMP_FILE_PREFIX + "/test-foxml.xml"));
-		File f = FOXMLs.generateFOXMLFromURI(URI.create("file://" + TEMP_FILE_PREFIX + "/invalid"),out);
+		File f = FOXMLs.generateFOXMLFromURI(URI.create("file://" + TEMP_FILE_PREFIX + "/invalid"));
 		assertNotNull(f);
 		assertTrue(f.length() > 0);
 	}
