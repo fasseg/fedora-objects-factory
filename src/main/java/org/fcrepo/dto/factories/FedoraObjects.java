@@ -3,7 +3,6 @@ package org.fcrepo.dto.factories;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Date;
-import java.util.Random;
 import java.util.UUID;
 
 import com.github.cwilper.fcrepo.dto.core.ControlGroup;
@@ -18,7 +17,6 @@ import com.github.cwilper.fcrepo.dto.core.State;
  * 
  */
 public abstract class FedoraObjects {
-	private static final Random random = new Random();
 
 	private FedoraObjects() {
 		// you no construct me from derived class!
