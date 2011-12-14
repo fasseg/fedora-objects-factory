@@ -1,6 +1,7 @@
 package org.fcrepo.dto.factories.cli;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.PrintStream;
 
 public class Questionary {
@@ -14,26 +15,49 @@ public class Questionary {
 
 	@SuppressWarnings("unchecked")
 	protected <T extends Object> T poseQuestion(Class<T> resultClazz, T defaultValue, String question) throws Exception {
-		out.print(question);
-		String input = reader.readLine();
-		if (input.length() == 0) {
-			return defaultValue;
-		}
-		if (resultClazz == String.class) {
-			return (T) input;
-		} else if (resultClazz == Integer.class) {
-			return (T) new Integer(input);
-		} else if (resultClazz == Boolean.class) {
-			String arg = input.toLowerCase();
-			if (arg.equals("no") || arg.equals("n") || arg.equals("false")) {
-				return (T) Boolean.FALSE;
-			} else if (arg.equals("yes") || arg.equals("y") || arg.equals("true")) {
-				return (T) Boolean.TRUE;
+		boolean valid=false;
+		T result=null;
+		while (!valid){
+			out.print(question);
+			String input = reader.readLine();
+			if (input.length() == 0) {
+				result=defaultValue;
+				valid=true;
 			}
-			else
-				throw new IllegalArgumentException("unable to parse " + input + " as a boolean");
-		} else {
-			throw new IllegalArgumentException("unable to handle results of type " + resultClazz.getName());
+			if (resultClazz == String.class) {
+				result=(T) input;
+				valid=true;
+			} else if (resultClazz == Integer.class) {
+				try{
+					result=(T) new Integer(input);
+					valid=true;
+				}catch(NumberFormatException e){
+					printError(input);
+				}
+			} else if (resultClazz == Boolean.class) {
+				String arg = input.toLowerCase();
+				if (arg.equals("no") || arg.equals("n") || arg.equals("false")) {
+					result= (T) Boolean.FALSE;
+					valid=true;
+				} else if (arg.equals("yes") || arg.equals("y") || arg.equals("true")) {
+					result= (T) Boolean.TRUE;
+					valid=true;
+				} else {
+					printError(input);
+				}
+			}else if(resultClazz == File.class){
+				result=(T) new File(input);
+				valid=true;
+			} else {
+				throw new IllegalArgumentException("unable to handle results of type " + resultClazz.getName());
+			}
 		}
+		return result;
 	}
+
+	private void printError(String input) throws Exception {
+		System.err.println("Unable to parse input '" + input + "'.Please try again");
+		Thread.sleep(500);
+	}
+
 }
