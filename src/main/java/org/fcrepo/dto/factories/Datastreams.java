@@ -46,9 +46,9 @@ public abstract class Datastreams {
 	 *             the content could not be written to the filesystem
 	 */
 	public final static DatastreamVersion generateDatastreamVersionFromRandomData(final long size,
-			final String filePrefix)
+			final File targetDirectory)
 			throws IOException {
-		final File versionFile = new File(filePrefix + "/" + UUID.randomUUID());
+		final File versionFile = new File(targetDirectory,UUID.randomUUID().toString());
 		final FileOutputStream versionOut = new FileOutputStream(versionFile);
 		final byte[] buffer = (size < 4096) ? new byte[(int) size] : new byte[4096];
 		long sumBytes = size;

@@ -1,5 +1,6 @@
 package org.fcrepo.dto.factories;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Date;
@@ -51,13 +52,13 @@ public abstract class FedoraObjects {
 	 *             if the contents could not be fetched from the {@link URI}
 	 */
 	public final static FedoraObject generateFedoraObjectFromRandomData(final int numVersions, final long size,
-			final String filePrefix, final ControlGroup controlGroup) throws IOException {
+			final File targetDirectory, final ControlGroup controlGroup) throws IOException {
 		final Datastream datastream = new Datastream("random datastream " + UUID.randomUUID())
 				.controlGroup(controlGroup);
 		for (int i = 0; i < numVersions; i++) {
 			boolean success = false;
 			while (!success) {
-				success = datastream.versions().add(Datastreams.generateDatastreamVersionFromRandomData(size, filePrefix));
+				success = datastream.versions().add(Datastreams.generateDatastreamVersionFromRandomData(size, targetDirectory));
 			}
 		}
 		final FedoraObject fo = new FedoraObject()
@@ -85,9 +86,9 @@ public abstract class FedoraObjects {
 	 * @throws IOException
 	 */
 	public final static FedoraObject generateFedoraObjectFromRandomData(final int numVersions, final long size,
-			final String filePrefix)
+			final File targetDirectory)
 			throws IOException {
-		return generateFedoraObjectFromRandomData(numVersions, size, filePrefix, ControlGroup.MANAGED);
+		return generateFedoraObjectFromRandomData(numVersions, size, targetDirectory, ControlGroup.MANAGED);
 	}
 
 	/**

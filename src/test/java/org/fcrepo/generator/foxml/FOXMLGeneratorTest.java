@@ -38,47 +38,45 @@ import com.github.cwilper.fcrepo.dto.foxml.FOXMLWriter;
 
 public class FOXMLGeneratorTest {
 
-	private static final String TEMP_FILE_PREFIX = System.getProperty("java.io.tmpdir") + "/foxml-test-"
-			+ UUID.randomUUID();
+	private static final File TEMP_DIR = new File(System.getProperty("java.io.tmpdir") + "/foxml-test-"
+			+ UUID.randomUUID());
 
 	@BeforeClass
 	public static void init() throws IOException {
-		File dir = new File(TEMP_FILE_PREFIX);
-		if (dir.exists()) {
-			throw new IOException("test directory " + TEMP_FILE_PREFIX + " already exists, this should not happen!");
+		if (TEMP_DIR.exists()) {
+			throw new IOException("test directory " + TEMP_DIR.getAbsolutePath() + " already exists, this should not happen!");
 		} else {
-			dir.mkdir();
+			TEMP_DIR.mkdir();
 		}
 
 	}
 
 	@AfterClass
 	public static void cleanUp() throws IOException {
-		File dir = new File(TEMP_FILE_PREFIX);
-		if (!dir.exists()) {
-			throw new IOException(TEMP_FILE_PREFIX + " does not exists. this should not happen!");
+		if (!TEMP_DIR.exists()) {
+			throw new IOException(TEMP_DIR.getAbsolutePath() + " does not exists. this should not happen!");
 		} else {
-			FileUtils.deleteDirectory(dir);
+			FileUtils.deleteDirectory(TEMP_DIR);
 		}
 	}
 
 	@Test
 	public void testGenerateFOXMLFromFile() throws Exception {
-		File f = FOXMLs.generateFOXMLFromURI(URI.create("file://" + TEMP_FILE_PREFIX + "/invalid"));
+		File f = FOXMLs.generateFOXMLFromURI(URI.create("file://" + TEMP_DIR.getAbsolutePath() + "/invalid"),new File(System.getProperty("java.io.tmpdir")));
 		assertNotNull(f);
 		assertTrue(f.length() > 0);
 	}
 
 	@Test
 	public void testGenerateFOXMLFromRandomData() throws Exception {
-		File f = FOXMLs.generateFOXMLFromRandomData(3, 8167, TEMP_FILE_PREFIX);
+		File f = FOXMLs.generateFOXMLFromRandomData(3, 8167, TEMP_DIR);
 		assertNotNull(f);
 		assertTrue(f.length() > 0);
 	}
 
 	@Test
 	public void testGenerateFedoraObjectFromRandomData() throws Exception {
-		FedoraObject fo = FedoraObjects.generateFedoraObjectFromRandomData(3, 8198, TEMP_FILE_PREFIX);
+		FedoraObject fo = FedoraObjects.generateFedoraObjectFromRandomData(3, 8198, TEMP_DIR);
 		assertNotNull(fo);
 		assertTrue(fo.datastreams().size() == 1);
 		assertTrue(fo.datastreams().get(fo.datastreams().firstKey()).versions().size() == 3);
@@ -94,10 +92,9 @@ public class FOXMLGeneratorTest {
 	@Test
 	public void testGenerateDatastreamsFromFiles() throws Exception {
 		List<URI> files = new ArrayList<URI>();
-		File dir = new File(TEMP_FILE_PREFIX);
-		files.add(File.createTempFile("datastream-orig", ".ingest", dir).toURI());
-		files.add(File.createTempFile("datastream-orig", ".ingest", dir).toURI());
-		files.add(File.createTempFile("datastream-orig", ".ingest", dir).toURI());
+		files.add(File.createTempFile("datastream-orig", ".ingest", TEMP_DIR).toURI());
+		files.add(File.createTempFile("datastream-orig", ".ingest", TEMP_DIR).toURI());
+		files.add(File.createTempFile("datastream-orig", ".ingest", TEMP_DIR).toURI());
 		List<Datastream> streams = Datastreams.generateDatastreamsFromURIs(files, ControlGroup.MANAGED);
 		assertTrue(streams.size() == 3);
 	}
@@ -105,24 +102,23 @@ public class FOXMLGeneratorTest {
 	@Test
 	public void testGenerateDatastreamFromFiles() throws Exception {
 		List<URI> files = new ArrayList<URI>();
-		File dir = new File(TEMP_FILE_PREFIX);
-		files.add(File.createTempFile("datastream-orig", ".ingest", dir).toURI());
-		files.add(File.createTempFile("datastream-orig", ".ingest", dir).toURI());
-		files.add(File.createTempFile("datastream-orig", ".ingest", dir).toURI());
+		files.add(File.createTempFile("datastream-orig", ".ingest", TEMP_DIR).toURI());
+		files.add(File.createTempFile("datastream-orig", ".ingest", TEMP_DIR).toURI());
+		files.add(File.createTempFile("datastream-orig", ".ingest", TEMP_DIR).toURI());
 		Datastream stream = Datastreams.generateDatastreamFromURIs(files, ControlGroup.MANAGED);
 		assertTrue(stream.versions().size() == 3);
 	}
 
 	@Test
 	public void testGenerateDatastreamsFromFileWithControlGroup() throws Exception {
-		File tmp = File.createTempFile("datastream-orig", ".ingest", new File(TEMP_FILE_PREFIX));
+		File tmp = File.createTempFile("datastream-orig", ".ingest", TEMP_DIR);
 		Datastream ds = Datastreams.generateDatastreamFromURI(tmp.toURI(), ControlGroup.EXTERNAL);
 		assertEquals(ds.controlGroup(), ControlGroup.EXTERNAL);
 	}
 
 	@Test
 	public void testGenerateFedoraObjectFromFileWithControlGroup() throws Exception {
-		File tmp = File.createTempFile("datastream-orig", ".ingest", new File(TEMP_FILE_PREFIX));
+		File tmp = File.createTempFile("datastream-orig", ".ingest", TEMP_DIR);
 		FedoraObject object = FedoraObjects.generateFedoraObjectFromURI(tmp.toURI(), ControlGroup.EXTERNAL);
 		Datastream ds = object.datastreams().get(object.datastreams().firstKey());
 		assertEquals(ds.controlGroup(), ControlGroup.EXTERNAL);

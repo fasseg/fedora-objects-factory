@@ -8,8 +8,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.dto.factories.FOXMLs;
@@ -32,6 +35,9 @@ public final class CommandlineGenerator extends Questionary {
 	public static final String PROPERTY_TARGET_DIRECTORY = "generator.target.directory";
 	public static final String PROPERTY_DATASTREAMS_RANDOM = "generator.datastreams.random";
 	public static final String PROPERTY_CONTROLGROUP = "generator.controlgroup";
+	public static final String PROPERTY_DATASTREAM_RANDOM_SIZE = "generator.datastream.random.size";
+	public static final String PROPERTY_INPUT_DIRECTORY = "generator.input.directory";
+	public static final String PROPERTY_INPUT_FILETYPES = "generator.input.filetypes";
 
 	private Properties properties = new Properties();
 
@@ -50,17 +56,60 @@ public final class CommandlineGenerator extends Questionary {
 		}
 	}
 
-	private void questionNumFOXML() throws Exception {
+	private void questionRandomNumFOXML() throws Exception {
 		boolean valid = false;
 		while (!valid) {
 			try {
 				Integer numFoxml = poseQuestion(Integer.class, 100,
 						"How many FOXML should be generated [default=100]? ");
 				properties.setProperty(PROPERTY_NUM_FOXML, String.valueOf(numFoxml));
+				valid = true;
+				this.questionRandomContentSize();
 			} catch (NumberFormatException e) {
 				e.printStackTrace();
 			}
-			valid = true;
+		}
+	}
+
+	private void questionRandomContentSize() throws Exception {
+		boolean valid = false;
+		while (!valid) {
+			try {
+				Integer randomContent = poseQuestion(Integer.class, 10, "What size in kilobytes should the generated datastreams have [default=10] ?");
+				properties.setProperty(PROPERTY_DATASTREAM_RANDOM_SIZE, String.valueOf(randomContent));
+				valid = true;
+			} catch (NumberFormatException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private void questionDatastreamContent() throws Exception{
+		boolean valid=false;
+		while (!valid){
+			String dir=poseQuestion(String.class, System.getProperty("java.io.tmpdir"), "Where are the content files located [default=" + System.getProperty("java.io.tmpdir") + "] ?");
+			File inputDir=new File(dir);
+			properties.setProperty(PROPERTY_INPUT_DIRECTORY,inputDir.getAbsolutePath());
+			if (inputDir.exists() && inputDir.canRead()){
+				this.questionDatastreamContentFiletypes();
+				valid=true;
+			}else{
+				System.err.println(dir + " does not exist or is not readable.");
+				Thread.sleep(1000);
+			}
+		}
+	}
+
+	private void questionDatastreamContentFiletypes() throws Exception{
+		boolean valid=false;
+		while (!valid){
+			String fileTypes=poseQuestion(String.class, "", "Which file types should be used as content, e.g. 'jpg,jp2,png' [default=\"\"] ?");
+			if (fileTypes.trim().length() == 0){
+				properties.setProperty(PROPERTY_INPUT_FILETYPES, "*");
+			}else{
+				properties.setProperty(PROPERTY_INPUT_FILETYPES, fileTypes);
+			}
+			valid=true;
 		}
 	}
 
@@ -71,6 +120,11 @@ public final class CommandlineGenerator extends Questionary {
 					"Should random data be generated for the datastreams? [default=yes]");
 			properties.setProperty(PROPERTY_DATASTREAMS_RANDOM, String.valueOf(randomDatastreams));
 			valid = true;
+			if (randomDatastreams) {
+				this.questionRandomNumFOXML();
+			} else {
+				this.questionDatastreamContent();
+			}
 		}
 	}
 
@@ -131,27 +185,64 @@ public final class CommandlineGenerator extends Questionary {
 	private void startFOXMLCreation() throws IOException {
 		properties.store(new FileOutputStream("generator.properties"), "created by generator");
 		properties.store(System.out, "none");
-		final int numFoxml = Integer.parseInt(properties.getProperty(PROPERTY_NUM_FOXML));
-		final File targetDirectory = new File(properties.getProperty(PROPERTY_TARGET_DIRECTORY));
 		final boolean randomDatastreams = Boolean.parseBoolean(properties.getProperty(PROPERTY_DATASTREAMS_RANDOM));
-		final ControlGroup controlGroup = ControlGroup.valueOf(properties.getProperty(PROPERTY_CONTROLGROUP));
-		final boolean inlineXMl = Boolean.parseBoolean(properties.getProperty(PROPERTY_INLINE_BASE64));
+		final File targetDirectory = new File(properties.getProperty(PROPERTY_TARGET_DIRECTORY));
 		if (!targetDirectory.exists()) {
 			targetDirectory.mkdir();
 		}
-		List<File> foxmls = new ArrayList<File>();
+		final List<File> foxmls;
 		if (randomDatastreams) {
-			for (int i = 0; i < numFoxml; i++) {
-				if (controlGroup == ControlGroup.MANAGED && inlineXMl) {
-					foxmls.add(FOXMLs.generateInlineFOXMLFromRandomData(1, 1024, targetDirectory.getAbsolutePath().toString()));
-				} else {
-					foxmls.add(FOXMLs.generateFOXMLFromRandomData(1, 1024L, targetDirectory.getAbsolutePath().toString(), controlGroup));
-				}
-			}
+			foxmls=createFOXMLFromRandomData(targetDirectory);
 		} else {
-
+			foxmls=createFOXMLFromInputFiles(targetDirectory);
 		}
 		System.out.println("generated " + foxmls.size() + " FOXML files");
+	}
+
+	private List<File> createFOXMLFromInputFiles(File targetDirectory) throws IOException {
+		final List<File> foxmls = new ArrayList<File>();
+		final File inputDirectiory=new File(properties.getProperty(PROPERTY_INPUT_DIRECTORY));
+		final String types=properties.getProperty(PROPERTY_INPUT_FILETYPES);
+		final Set<String> fileTypes=new HashSet<String>();
+		if (types.length() > 0 && !types.equals("*")){
+			fileTypes.addAll(Arrays.asList(types.split(",")));
+		}
+		for (File content:getFileList(inputDirectiory,types)){
+			foxmls.add(FOXMLs.generateFOXMLFromURI(content.toURI(),targetDirectory));
+		}
+		return foxmls;
+	}
+
+	private List<File> getFileList(File dir,String types) {
+		List<File> fileList=new ArrayList<File>();
+		for (String s: dir.list()){
+			File f=new File(dir,s);
+			if (f.isFile()){
+				fileList.add(f);
+			}else if (f.isDirectory()){
+				fileList.addAll(getFileList(f, types));
+			}
+		}
+		return fileList;
+	}
+
+	private List<File> createFOXMLFromRandomData(final File targetDirectory) throws IOException{
+		final List<File> foxmls = new ArrayList<File>();
+		final int numFoxml = Integer.parseInt(properties.getProperty(PROPERTY_NUM_FOXML));
+		final ControlGroup controlGroup = ControlGroup.valueOf(properties.getProperty(PROPERTY_CONTROLGROUP));
+		final boolean inlineXMl = Boolean.parseBoolean(properties.getProperty(PROPERTY_INLINE_BASE64));
+		final long fileSize = Long.parseLong(properties.getProperty(PROPERTY_DATASTREAM_RANDOM_SIZE)) * 1000;
+		for (int i = 0; i < numFoxml; i++) {
+			if (controlGroup == ControlGroup.MANAGED && inlineXMl) {
+				if (fileSize > Integer.MAX_VALUE) {
+					throw new IOException("filesize too large, for fitting a Base64 String in memory");
+				}
+				foxmls.add(FOXMLs.generateInlineFOXMLFromRandomData(1, (int) fileSize, targetDirectory));
+			} else {
+				foxmls.add(FOXMLs.generateFOXMLFromRandomData(1, fileSize, targetDirectory, controlGroup));
+			}
+		}
+		return foxmls;
 	}
 
 	/**
@@ -177,7 +268,6 @@ public final class CommandlineGenerator extends Questionary {
 			try {
 				reader = new BufferedReader(new InputStreamReader(System.in));
 				CommandlineGenerator generator = new CommandlineGenerator(reader, System.out);
-				generator.questionNumFOXML();
 				generator.questionInputFiles();
 				generator.questionTargetDirectory();
 				generator.questionControlGroup();

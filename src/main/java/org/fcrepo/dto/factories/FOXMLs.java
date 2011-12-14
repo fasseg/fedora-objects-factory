@@ -39,11 +39,10 @@ public abstract class FOXMLs {
 	 * @throws IOException
 	 */
 	public final static File generateFOXMLFromRandomData(final int numVersions, final long size,
-			final String filePrefix, final ControlGroup controlGroup) throws IOException {
+			final File targetDirectory, final ControlGroup controlGroup) throws IOException {
 		final FOXMLWriter writer = new FOXMLWriter();
-		final File dir = new File(filePrefix);
-		final File out = File.createTempFile("testfoxml-", ".xml", dir);
-		writer.writeObject(FedoraObjects.generateFedoraObjectFromRandomData(numVersions, size, filePrefix, controlGroup), new FileOutputStream(out));
+		final File out = File.createTempFile("testfoxml-", ".xml", targetDirectory);
+		writer.writeObject(FedoraObjects.generateFedoraObjectFromRandomData(numVersions, size, targetDirectory, controlGroup), new FileOutputStream(out));
 		return out;
 	}
 
@@ -61,11 +60,10 @@ public abstract class FOXMLs {
 	 * @throws IOException
 	 */
 	public final static File generateInlineFOXMLFromRandomData(final int numVersions, final int size,
-			final String filePrefix) throws IOException {
+			final File targetDirectory) throws IOException {
 		final FOXMLWriter writer = new FOXMLWriter();
-		final File dir = new File(filePrefix);
-		final File out = File.createTempFile("testfoxml-", ".xml", dir);
-		final FedoraObject fo = FedoraObjects.generateFedoraObjectFromRandomData(1, 1024, filePrefix, ControlGroup.MANAGED);
+		final File out = File.createTempFile("testfoxml-", ".xml", targetDirectory);
+		final FedoraObject fo = FedoraObjects.generateFedoraObjectFromRandomData(1, size, targetDirectory, ControlGroup.MANAGED);
 		writer.setManagedDatastreamsToEmbed(fo.datastreams().keySet());
 		writer.writeObject(fo, new FileOutputStream(out));
 		return out;
@@ -84,9 +82,9 @@ public abstract class FOXMLs {
 	 * @return a new {@link File} referencing the FOXML
 	 * @throws IOException
 	 */
-	public final static File generateFOXMLFromRandomData(final int numVersions, final long size, final String filePrefix)
+	public final static File generateFOXMLFromRandomData(final int numVersions, final long size, final File targetDirectory)
 			throws IOException {
-		return generateFOXMLFromRandomData(numVersions, size, filePrefix, ControlGroup.MANAGED);
+		return generateFOXMLFromRandomData(numVersions, size, targetDirectory, ControlGroup.MANAGED);
 	}
 
 	/**
@@ -97,9 +95,9 @@ public abstract class FOXMLs {
 	 * @return a new {@link File} referencing the FOXML
 	 * @throws IOException
 	 */
-	public final static File generateFOXMLFromURI(final URI uri) throws IOException {
+	public final static File generateFOXMLFromURI(final URI uri,final File targetDirectory) throws IOException {
 		final FOXMLWriter writer = new FOXMLWriter();
-		final File outFile = File.createTempFile("testfoxml-", ".xml");
+		final File outFile = File.createTempFile("testfoxml-", ".xml",targetDirectory);
 		FileOutputStream out = null;
 		try {
 			out = new FileOutputStream(outFile);
