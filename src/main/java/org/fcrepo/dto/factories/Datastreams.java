@@ -177,6 +177,7 @@ public abstract class Datastreams {
 			controlGroup = ControlGroup.MANAGED;
 		}
 		final DatastreamVersion version = new DatastreamVersion("datastream-" + UUID.randomUUID(), new Date());
+		version.mimeType("application/octet-stream");
 		version.formatURI(URI.create("info:fedora/fedora-system:def/foxml#"))
 				.contentLocation(uri);
 		if (controlGroup == ControlGroup.INLINE_XML) {
